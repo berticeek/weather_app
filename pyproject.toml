@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "weather"
+version = "0.1.0"
+description = "Weather micro service"
+authors = ["Patrik Albert <patrik.albert5@gmail.com>"]
+readme = "readme.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.109.0"
+uvicorn = "^0.25.0"
+httpx = "^0.26.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.20.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
