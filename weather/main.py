@@ -3,12 +3,13 @@ import http
 import json
 from time import sleep
 
+import pendulum
 from loguru import logger
 import uvicorn as uvicorn
 from fastapi import FastAPI
 import httpx
 from fastapi_restful.tasks import repeat_every
-from sqlmodel import create_engine, SQLModel
+from sqlmodel import create_engine, SQLModel, Session
 
 from .models import Measurement
 
@@ -28,21 +29,7 @@ def get_weather():
 
     logger.info("Getting weather")
     with open("weather_data.json", "r") as data_f:
-        weather_data = json.load(data_f)
-
-    measurement = Measurement(
-        temperature=weather_data["main"]["temp"],
-        humidity=weather_data["main"]["humidity"],
-        pressure=weather_data["main"]["pressure"],
-        city=weather_data["name"],
-        country=weather_data["sys"]["country"],
-        wind_speed=weather_data["wind"]["speed"],
-        wind_direction=weather_data["wind"]["deg"],
-        dt=weather_data["dt"],
-        sunrise=weather_data["sys"]["sunrise"],
-        sunset=weather_data["sys"]["sunset"],
-        icon=weather_data["weather"][0]["icon"]
-    )
+        return json.load(data_f)
 
 
 @app.on_event("startup")
@@ -66,15 +53,35 @@ def retrieve_weather_data(q: str = "Kosice", units: str = 'metric', lang: str = 
     if response.status_code == http.HTTPStatus.OK:
         logger.info("Saving retrieved data")
 
-        with open("weather_data.json", 'w') as data_f:
-            json.dump(response.json(), data_f, indent=2)
+        weather_data = response.json()
+
+        measurement = Measurement(
+            temperature=weather_data["main"]["temp"],
+            humidity=weather_data["main"]["humidity"],
+            pressure=weather_data["main"]["pressure"],
+            city=weather_data["name"],
+            country=weather_data["sys"]["country"],
+            wind_speed=weather_data["wind"]["speed"],
+            wind_direction=weather_data["wind"]["deg"],
+            dt=pendulum.from_timestamp(weather_data["dt"]),
+            sunrise=pendulum.from_timestamp(weather_data["sys"]["sunrise"]),
+            sunset=pendulum.from_timestamp(weather_data["sys"]["sunset"]),
+            icon=weather_data["weather"][0]["icon"]
+        )
+
+        engine = create_engine("sqlite:///database.sqlite")
+        with Session(engine) as session:
+            session.add(measurement)
+            session.commit()
+
+        logger.info("Measurements successfully stored")
     else:
         logger.error(f"Data were not retrieved correctly. Status code: {response.status_code}")
 
 
 def main():
     # Create db schema
-    engine = create_engine("sqlite:///database.sql")
+    engine = create_engine("sqlite:///database.sqlite")
     SQLModel.metadata.create_all(engine)
 
     # run service
