@@ -1,8 +1,16 @@
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
+
+from sqlmodel import SQLModel, Field
 
 
-class Measurement(BaseModel):
+class Measurement(SQLModel, table=True):
+    """
+    Data model for weather measurements
+    Subclass of SQLModel, so we can store data in the database
+    """
+
+    id: int | None = Field(default=None, primary_key=True)
     temperature: float      # °C
     humidity: float
     pressure: float         # hPa
