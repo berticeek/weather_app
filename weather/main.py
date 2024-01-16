@@ -9,10 +9,10 @@ import uvicorn as uvicorn
 from fastapi import FastAPI
 import httpx
 from fastapi_restful.tasks import repeat_every
-from sqladmin import Admin
+from sqladmin import Admin, ModelView
 from sqlmodel import create_engine, SQLModel, Session
 
-from .models import Measurement
+from .models import Measurement, MeasurementAdmin
 
 app = FastAPI()
 
@@ -21,7 +21,8 @@ engine = create_engine("sqlite:///database.sqlite")
 SQLModel.metadata.create_all(engine)
 
 # admin UI
-Admin(app, engine)
+admin = Admin(app, engine)
+admin.add_view(MeasurementAdmin)
 
 
 @app.get("/")
