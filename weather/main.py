@@ -26,6 +26,7 @@ admin.add_view(MeasurementAdmin)
 
 
 def get_measurements_query(city):
+    """Wrapper function to create sqlalchemy statement to get measurements"""
     statement = select(Measurement)
     if city is not None:
         return statement.where(Measurement.city == city)
@@ -42,6 +43,7 @@ def get_all_measurements(city: str = None):
 
 @app.get("/get_last")
 def get_last_measurement(city: str = None):
+    """Get last weather entry"""
     with Session(engine) as session:
         statement = get_measurements_query(city)
         return session.exec(statement.order_by(desc(Measurement.id))).first()
