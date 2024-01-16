@@ -10,6 +10,8 @@ from fastapi import FastAPI
 import httpx
 from fastapi_restful.tasks import repeat_every
 
+from weather.models import Measurement
+
 app = FastAPI()
 
 
@@ -22,7 +24,21 @@ def hello():
 def get_weather():
     logger.info("Getting weather")
     with open("weather_data.json", "r") as data_f:
-        return json.load(data_f)
+        weather_data = json.load(data_f)
+
+    measurement = Measurement(
+        temperature=weather_data["main"]["temp"],
+        humidity=weather_data["main"]["humidity"],
+        pressure=weather_data["main"]["pressure"],
+        city=weather_data["name"],
+        country=weather_data["sys"]["country"],
+        wind_speed=weather_data["wind"]["speed"],
+        wind_direction=weather_data["wind"]["deg"],
+        dt=weather_data["dt"],
+        sunrise=weather_data["sys"]["sunrise"],
+        sunset=weather_data["sys"]["sunset"],
+        icon=weather_data["weather"][0]["icon"]
+    )
 
 
 @app.on_event("startup")
@@ -38,9 +54,11 @@ def retrieve_weather_data(q: str = "Kosice", units: str = 'metric', lang: str = 
     }
 
     response = httpx.get(
-        "https://api.openweathermap.org/data/2.5/weatherd", params=params)
+        "https://api.openweathermap.org/data/2.5/weather", params=params, timeout=3)
 
     if response.status_code == http.HTTPStatus.OK:
+        logger.info("Saving retrieved data")
+
         with open("weather_data.json", 'w') as data_f:
             json.dump(response.json(), data_f, indent=2)
     else:
