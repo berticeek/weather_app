@@ -10,7 +10,7 @@ from fastapi import FastAPI
 import httpx
 from fastapi_restful.tasks import repeat_every
 from sqladmin import Admin, ModelView
-from sqlmodel import create_engine, SQLModel, Session, select
+from sqlmodel import create_engine, SQLModel, Session, select, desc
 
 from .models import Measurement, MeasurementAdmin
 
@@ -25,14 +25,26 @@ admin = Admin(app, engine)
 admin.add_view(MeasurementAdmin)
 
 
-@app.get("/get_all")
-def get_all_measurements():
-    """Get all weather measurements"""
+def get_measurements_query(city):
+    statement = select(Measurement)
+    if city is not None:
+        return statement.where(Measurement.city == city)
+    return statement
 
-    # engine = create_engine("sqlite:///database.sqlite")
+
+@app.get("/get_all")
+def get_all_measurements(city: str = None):
+    """Get all weather measurement data for all cities, or select by city"""
     with Session(engine) as session:
-        statement = select(Measurement)
+        statement = get_measurements_query(city)
         return session.exec(statement).all()
+
+
+@app.get("/get_last")
+def get_last_measurement(city: str = None):
+    with Session(engine) as session:
+        statement = get_measurements_query(city)
+        return session.exec(statement.order_by(desc(Measurement.id))).first()
 
 
 @app.get("/weather")
