@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import json
 
-from loguru import logger
+from fastapi_pagination import add_pagination
 import uvicorn as uvicorn
 from fastapi import FastAPI
 from sqladmin import Admin
@@ -11,9 +10,9 @@ from weather.api.measurements import router as measurements_router
 from weather.cron import router as cron_router
 from weather.dependencies import get_settings
 from weather.models.measurement import MeasurementAdmin
-from weather.models.settings import Settings
 
 app = FastAPI()
+add_pagination(app)
 
 # Include routers, standard REST routers and cronjob
 # Similar as they would be defined here in the main module, but for better organization they are

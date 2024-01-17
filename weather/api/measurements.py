@@ -1,33 +1,20 @@
-from sqlmodel import create_engine, Session, select, desc
+from fastapi_pagination.ext.sqlmodel import paginate
+from fastapi_pagination.links import Page
+from sqlmodel import Session, select, desc
 from fastapi import APIRouter, Depends
 
-from weather.dependencies import get_settings, get_session
+from weather.dependencies import get_session
 from weather.models.measurement import Measurement
-from weather.models.pager import Pager
-from weather.models.settings import Settings
 
 router = APIRouter()
+# add_pagination(router)
 
 
-@router.get("/api/measurements")
-def list_measurements(page: int = 1,
-                      page_size: int = 20,
-                      session: Session = Depends(get_session)):
+@router.get("/api/measurements", response_model=Page[Measurement])
+def list_measurements(session: Session = Depends(get_session)):
     """Get all weather measurement data for all cities, or select by city"""
-
-    # Pagination, offset is from which index to start and limit is how many rows to select
-    statement = (
-        select(Measurement)
-        .offset((page-1) * page_size)
-        .limit(page_size)
-    )
-    results = session.exec(statement).all()
-
-    return Pager(
-        first=f"http://localhost:8000/api/measurements?page=1&page_size={page_size}",
-        results=list(results),
-        count=len(results)
-    )
+    statement = select(Measurement)
+    return paginate(session, statement)
 
 
 @router.get("/api/measurements/last")
