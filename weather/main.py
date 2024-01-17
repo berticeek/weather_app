@@ -10,44 +10,24 @@ from fastapi import FastAPI
 import httpx
 from fastapi_restful.tasks import repeat_every
 from sqladmin import Admin, ModelView
-from sqlmodel import create_engine, SQLModel, Session, select, desc, asc
+from sqlmodel import create_engine, SQLModel, Session
 
+from weather.api.measurements import router as measurements_router
 from weather.models.measurement import Measurement, MeasurementAdmin
+from weather.models.settings import Settings
 
 app = FastAPI()
+app.include_router(measurements_router)
+
+settings = Settings()
 
 # Create db schema
-engine = create_engine("sqlite:///database.sqlite")
+engine = create_engine(settings.db_uri)
 SQLModel.metadata.create_all(engine)
 
 # admin UI
 admin = Admin(app, engine)
 admin.add_view(MeasurementAdmin)
-
-
-def get_measurements_query(city):
-    """Wrapper function to create sqlalchemy statement to get measurements"""
-    statement = select(Measurement)
-    if city is not None:
-        return statement.where(Measurement.city == city)
-    return statement
-
-
-@app.get("/api/measurements")
-def list_measurements(city: str = None):
-    """Get all weather measurement data for all cities, or select by city"""
-
-    with Session(engine) as session:
-        statement = get_measurements_query(city)
-        return session.exec(statement).all()
-
-
-@app.get("/api/measurements/last")
-def get_last_measurement(city: str = None):
-    """Get last weather entry"""
-    with Session(engine) as session:
-        statement = get_measurements_query(city)
-        return session.exec(statement.order_by(desc(Measurement.id))).first()
 
 
 @app.get("/weather")
@@ -68,7 +48,7 @@ def retrieve_weather_data(q: str = "Kosice", units: str = 'metric', lang: str = 
     params = {
         "q": q,
         "units": units,
-        "appid": "9e547051a2a00f2bf3e17a160063002d",
+        "appid": settings.api_token,
         "lang": lang
     }
 
@@ -96,7 +76,6 @@ def retrieve_weather_data(q: str = "Kosice", units: str = 'metric', lang: str = 
             icon=weather_data["weather"][0]["icon"]
         )
 
-        engine = create_engine("sqlite:///database.sqlite")
         with Session(engine) as session:
             session.add(measurement)
             session.commit()
