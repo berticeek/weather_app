@@ -8,10 +8,9 @@ from loguru import logger
 from sqlalchemy import create_engine
 from sqlmodel import Session
 
+from weather.dependencies import get_settings
 from weather.models.measurement import Measurement
 from weather.models.settings import Settings
-
-settings = Settings()
 
 router = APIRouter()
 
@@ -25,7 +24,7 @@ def retrieve_weather_data(q: str = "Kosice", units: str = 'metric', lang: str = 
     params = {
         "q": q,
         "units": units,
-        "appid": settings.api_token,
+        "appid": get_settings().api_token,
         "lang": lang
     }
 
@@ -52,7 +51,7 @@ def retrieve_weather_data(q: str = "Kosice", units: str = 'metric', lang: str = 
             sunset=pendulum.from_timestamp(weather_data["sys"]["sunset"]),
             icon=weather_data["weather"][0]["icon"]
         )
-        engine = create_engine(settings.db_uri)
+        engine = create_engine(get_settings().db_uri)
         with Session(engine) as session:
             session.add(measurement)
             session.commit()
