@@ -3,16 +3,31 @@ from fastapi import APIRouter, Depends
 
 from weather.dependencies import get_settings, get_session
 from weather.models.measurement import Measurement
+from weather.models.pager import Pager
 from weather.models.settings import Settings
 
 router = APIRouter()
 
 
 @router.get("/api/measurements")
-def list_measurements(session: Session = Depends(get_session)):
+def list_measurements(page: int = 1,
+                      page_size: int = 20,
+                      session: Session = Depends(get_session)):
     """Get all weather measurement data for all cities, or select by city"""
-    statement = select(Measurement)
-    return session.exec(statement).all()
+
+    # Pagination, offset is from which index to start and limit is how many rows to select
+    statement = (
+        select(Measurement)
+        .offset((page-1) * page_size)
+        .limit(page_size)
+    )
+    results = session.exec(statement).all()
+
+    return Pager(
+        first=f"http://localhost:8000/api/measurements?page=1&page_size={page_size}",
+        results=list(results),
+        count=len(results)
+    )
 
 
 @router.get("/api/measurements/last")
