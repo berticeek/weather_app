@@ -10,7 +10,7 @@ from fastapi import FastAPI
 import httpx
 from fastapi_restful.tasks import repeat_every
 from sqladmin import Admin, ModelView
-from sqlmodel import create_engine, SQLModel, Session, select, desc
+from sqlmodel import create_engine, SQLModel, Session, select, desc, asc
 
 from .models import Measurement, MeasurementAdmin
 
@@ -33,15 +33,16 @@ def get_measurements_query(city):
     return statement
 
 
-@app.get("/get_all")
-def get_all_measurements(city: str = None):
+@app.get("/api/measurements")
+def list_measurements(city: str = None):
     """Get all weather measurement data for all cities, or select by city"""
+
     with Session(engine) as session:
         statement = get_measurements_query(city)
         return session.exec(statement).all()
 
 
-@app.get("/get_last")
+@app.get("/api/measurements/last")
 def get_last_measurement(city: str = None):
     """Get last weather entry"""
     with Session(engine) as session:
