@@ -13,6 +13,10 @@ from weather.models.measurement import MeasurementAdmin
 from weather.models.settings import Settings
 
 app = FastAPI()
+
+# Include routers, standard REST routers and cronjob
+# Similar as they would be defined here in the main module, but for better organization they are
+#  split into separated modules. By app.include_router they are included back here
 app.include_router(measurements_router)
 app.include_router(cron_router)
 
@@ -25,15 +29,6 @@ SQLModel.metadata.create_all(engine)
 # admin UI
 admin = Admin(app, engine)
 admin.add_view(MeasurementAdmin)
-
-
-@app.get("/weather")
-def get_weather():
-    """Open json file with weather data and create model object"""
-
-    logger.info("Getting weather")
-    with open("weather_data.json", "r") as data_f:
-        return json.load(data_f)
 
 
 def main():
