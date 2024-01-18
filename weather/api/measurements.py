@@ -34,8 +34,6 @@ def get_measurement_by_slug(slug: int, session: Session = Depends(get_session)):
     """Get weather entry by its id"""
     statement = select(Measurement)
 
-    result = session.exec(statement.where(Measurement.id == slug)).one_or_none()
-
     try:
         return session.exec(statement.where(Measurement.id == slug)).one()
     except NoResultFound:

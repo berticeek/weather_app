@@ -32,7 +32,7 @@ admin.add_view(MeasurementAdmin)
 def main():
     # run service
     uvicorn.run('weather.main:app', reload=True,
-                host='127.0.0.1', port=8000)
+                host='127.0.0.1', port=8000, log_level='error')
 
 
 if __name__ == '__main__':
