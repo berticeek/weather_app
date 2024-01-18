@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel, HttpUrl, validator, field_validator
 from sqladmin import ModelView
 from sqlmodel import SQLModel, Field
+
+from weather.dependencies import get_settings
 
 
 class Measurement(SQLModel, table=True):
@@ -23,6 +26,19 @@ class Measurement(SQLModel, table=True):
     sunrise: datetime       # UTC
     sunset: datetime        # UTC
     icon: str
+
+
+class MeasurementOut(BaseModel):
+    city: str
+    temperature: float
+    url: HttpUrl = None
+
+    @field_validator("url")
+    @classmethod
+    def set_url(cls, value, values):
+        print(value)
+        print(values)
+        return f"{get_settings().base_url}/api/measurements/1"
 
 
 class MeasurementAdmin(ModelView, model=Measurement):
