@@ -1,4 +1,5 @@
 import http
+from datetime import date
 
 from fastapi_pagination.ext.sqlmodel import paginate
 from fastapi_pagination.links import Page
@@ -16,12 +17,20 @@ router = APIRouter()
 
 
 @router.get("/api/measurements", response_model=Page[Measurement])
-def list_measurements(city: str | None = None, session: Session = Depends(get_session)):
+def list_measurements(start_date: date | None = None,
+                      end_date: date | None = None,
+                      city: str | None = None,
+                      session: Session = Depends(get_session)):
     """Get all weather measurement data for all cities, or select by city"""
     statement = select(Measurement)
 
     if city:
         statement = statement.where(Measurement.city == city)
+
+    if start_date:
+        statement = statement.where(Measurement.dt >= start_date)
+    if end_date:
+        statement = statement.where(Measurement.dt < end_date)
 
     return paginate(session, statement)
 
