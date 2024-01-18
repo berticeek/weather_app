@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import NoResultFound
 from sqlmodel import Session, select, desc
 from fastapi import APIRouter, Depends
+from loguru import logger
 
 from weather.dependencies import get_session
 from weather.models.ProblemDetails import ProblemDetails
@@ -37,17 +38,17 @@ def get_measurement_by_slug(slug: int, session: Session = Depends(get_session)):
 
     try:
         return session.exec(statement.where(Measurement.id == slug)).one()
-    except NoResultFound as e:
-        if result is None:
-            content = ProblemDetails(
-                status=http.HTTPStatus.NOT_FOUND,
-                title="Measurement not found",
-                detail=f"Measurement {slug} not found",
-                instance=f"/api/measurements/{slug}"
-            )
+    except NoResultFound:
+        logger.warning(f"Measurement {slug} not found")
+        content = ProblemDetails(
+            status=http.HTTPStatus.NOT_FOUND,
+            title="Measurement not found",
+            detail=f"Measurement {slug} not found",
+            instance=f"/api/measurements/{slug}"
+        )
 
-            return JSONResponse(
-                status_code=content.status,
-                content=content.model_dump(),
-                media_type="application/problem+json"
-            )
+        return JSONResponse(
+            status_code=content.status,
+            content=content.model_dump(),
+            media_type="application/problem+json"
+        )
