@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
+from pathlib import Path
 
 from fastapi_pagination import add_pagination
 import uvicorn as uvicorn
 from fastapi import FastAPI
 from sqladmin import Admin
 from sqlmodel import create_engine, SQLModel
+from fastapi.staticfiles import StaticFiles
 
 from weather.api.measurements import router as measurements_router
 from weather.cron import router as cron_router
@@ -13,6 +15,10 @@ from weather.models.measurement import MeasurementAdmin
 
 app = FastAPI()
 add_pagination(app)
+
+app.mount("/static",
+          StaticFiles(directory=Path(__file__).parent / "static"),
+          name="static")
 
 # Include routers, standard REST routers and cronjob
 # Similar as they would be defined here in the main module, but for better organization they are
