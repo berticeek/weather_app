@@ -16,9 +16,13 @@ router = APIRouter()
 
 
 @router.get("/api/measurements", response_model=Page[Measurement])
-def list_measurements(session: Session = Depends(get_session)):
+def list_measurements(city: str | None = None, session: Session = Depends(get_session)):
     """Get all weather measurement data for all cities, or select by city"""
     statement = select(Measurement)
+
+    if city:
+        statement = statement.where(Measurement.city == city)
+
     return paginate(session, statement)
 
 
