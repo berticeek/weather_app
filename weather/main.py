@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from weather.api.measurements import router as measurements_router
 from weather.views.homepage import router as homepage_router
+from weather.api.healthcheck import router as health_router
 from weather.cron import router as cron_router
 from weather.dependencies import get_settings
 from weather.models.measurement import MeasurementAdmin
@@ -27,6 +28,7 @@ app.mount("/static",
 app.include_router(measurements_router)
 app.include_router(cron_router)
 app.include_router(homepage_router)
+app.include_router(health_router)
 
 # Create db schema
 engine = create_engine(get_settings().db_uri)
